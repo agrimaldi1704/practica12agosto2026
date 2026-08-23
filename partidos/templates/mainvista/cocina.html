@@ -1,19 +1,17 @@
-# ahora el de la cocina.html que va dentro de mainvista
-
 {% extends 'mainvista/base.html' %}
 
 {% block content %}
-<h2 class="mb-4">📋 Comandas Activas (Barista / Cocina)</h2>
+<h2 class="mb-4">🧑‍🍳 Comandas Activas (Barista / Cocina)</h2>
 
 <div class="table-responsive">
     <table class="table table-striped table-hover bg-white shadow-sm">
-        <thead class="table-dark">
+        <thead style="background-color: #4E342E; color: white;">
             <tr>
-                <th># Orden</th>
-                <th>Cliente</th>
-                <th>Estado</th>
-                <th>Total</th>
-                <th>Acción</th>
+                <th>🎫 # Orden</th>
+                <th>👤 Cliente</th>
+                <th>📌 Estado</th>
+                <th>💲 Total</th>
+                <th>⚙️ Acción</th>
             </tr>
         </thead>
         <tbody>
@@ -27,6 +25,10 @@
                         {% elif pedido.estado == 'EN_PREPARACION' %}bg-info text-dark
                         {% elif pedido.estado == 'LISTO' %}bg-primary
                         {% else %}bg-success{% endif %}">
+                        {% if pedido.estado == 'PENDIENTE' %}⏳
+                        {% elif pedido.estado == 'EN_PREPARACION' %}🔥
+                        {% elif pedido.estado == 'LISTO' %}✅
+                        {% else %}📦{% endif %}
                         {{ pedido.get_estado_display }}
                     </span>
                 </td>
@@ -35,17 +37,17 @@
                     <form action="{% url 'cambiar_estado' pedido.id %}" method="POST" class="d-inline">
                         {% csrf_token %}
                         <select name="nuevo_estado" onchange="this.form.submit()" class="form-select form-select-sm d-inline-block w-auto">
-                            <option value="PENDIENTE" {% if pedido.estado == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
-                            <option value="EN_PREPARACION" {% if pedido.estado == 'EN_PREPARACION' %}selected{% endif %}>En Preparación</option>
-                            <option value="LISTO" {% if pedido.estado == 'LISTO' %}selected{% endif %}>Listo</option>
-                            <option value="ENTREGADO" {% if pedido.estado == 'ENTREGADO' %}selected{% endif %}>Entregado</option>
+                            <option value="PENDIENTE" {% if pedido.estado == 'PENDIENTE' %}selected{% endif %}>⏳ Pendiente</option>
+                            <option value="EN_PREPARACION" {% if pedido.estado == 'EN_PREPARACION' %}selected{% endif %}>🔥 En Preparación</option>
+                            <option value="LISTO" {% if pedido.estado == 'LISTO' %}selected{% endif %}>✅ Listo</option>
+                            <option value="ENTREGADO" {% if pedido.estado == 'ENTREGADO' %}selected{% endif %}>📦 Entregado</option>
                         </select>
                     </form>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center">No hay pedidos registrados.</td>
+                <td colspan="5" class="text-center">🙁 No hay pedidos registrados.</td>
             </tr>
             {% endfor %}
         </tbody>
