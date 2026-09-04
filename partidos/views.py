@@ -3,6 +3,12 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from partidos.dao.partidos_dao import ProductoDAO, PedidoDAO
 from partidos.serializers import ProductoSerializer, PedidoSerializer
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+
+def es_cocina(user):
+    """Verifica si el usuario autenticado pertenece al grupo 'Cocina' o es Staff/Admin"""
+    return user.is_authenticated and (user.groups.filter(name='Cocina').exists() or user.is_staff)
 
 # ==========================================
 # 1. VISTAS WEB (HTML)
@@ -13,6 +19,8 @@ def menu_view(request):
     productos = ProductoDAO.obtener_disponibles()
     return render(request, 'mainvista/menu.html', {'productos': productos})
 
+@login_required
+@user_passes_test(es_cocina, login_url='/admin/login/')
 def cocina_view(request):
     """Muestra las comandas al Barista/Cocina utilizando el DAO"""
     pedidos = PedidoDAO.obtener_todos()
