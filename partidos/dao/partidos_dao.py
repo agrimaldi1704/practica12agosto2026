@@ -56,7 +56,7 @@ class PedidoDAO:
 
     @staticmethod
     def obtener_todos() -> List[Pedido]:
-        return Pedido.objects.all().order_by('-fecha')
+        return Pedido.objects.select_related('producto').all().order_by('-fecha')
 
     @staticmethod
     def obtener_por_id(pedido_id: int) -> Optional[Pedido]:
@@ -66,8 +66,14 @@ class PedidoDAO:
             return None
 
     @staticmethod
+    def obtener_pendientes_o_en_preparacion() -> List[Pedido]:
+        # Trae solo comandas activas para el panel de cocina
+        return Pedido.objects.select_related('producto').filter(
+            estado__in=['PENDIENTE', 'EN_PREPARACION']
+        ).order_by('fecha')
+
+    @staticmethod
     def crear_pedido_con_producto(cliente_nombre: str, producto_id: int) -> Optional[Pedido]:
-        """Alta de un nuevo pedido, vinculado correctamente a su producto"""
         producto = ProductoDAO.obtener_por_id(producto_id)
         if producto:
             return Pedido.objects.create(
@@ -79,7 +85,6 @@ class PedidoDAO:
 
     @staticmethod
     def cambiar_estado(pedido_id: int, nuevo_estado: str) -> Optional[Pedido]:
-        """Cambio del estado de un pedido"""
         pedido = PedidoDAO.obtener_por_id(pedido_id)
         if pedido:
             pedido.estado = nuevo_estado

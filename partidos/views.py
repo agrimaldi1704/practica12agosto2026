@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from partidos.dao.partidos_dao import ProductoDAO, PedidoDAO
 from partidos.serializers import ProductoSerializer, PedidoSerializer
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
 
 
 def es_cocina(user):
@@ -22,8 +23,8 @@ def menu_view(request):
 @login_required
 @user_passes_test(es_cocina, login_url='/admin/login/')
 def cocina_view(request):
-    """Muestra las comandas al Barista/Cocina utilizando el DAO"""
-    pedidos = PedidoDAO.obtener_todos()
+    """Muestra solo las comandas activas (pendientes o en preparación)"""
+    pedidos = PedidoDAO.obtener_pendientes_o_en_preparacion()
     return render(request, 'mainvista/cocina.html', {'pedidos': pedidos})
 
 def crear_pedido_action(request):
@@ -34,6 +35,8 @@ def crear_pedido_action(request):
         PedidoDAO.crear_pedido_con_producto(cliente_nombre, producto_id)
     return redirect('cocina')
 
+@login_required
+@user_passes_test(es_cocina, login_url='/admin/login/')
 def cambiar_estado_action(request, pedido_id):
     """Actualiza el estado de una comanda desde la vista web"""
     if request.method == 'POST':
@@ -53,7 +56,29 @@ class ProductoViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 class PedidoViewSet(viewsets.ViewSet):
+    # Permite listar los pedidos (GET)
     def list(self, request):
         pedidos = PedidoDAO.obtener_todos()
         serializer = PedidoSerializer(pedidos, many=True)
         return Response(serializer.data)
+
+    # Permite crear un pedido desde la API (POST)
+    def create(self, request):
+        cliente_nombre = request.data.get('cliente_nombre')
+        producto_id = request.data.get('producto_id')
+
+        if not cliente_nombre or not producto_id:
+            return Response(
+                {"error": "Se requieren cliente_nombre y producto_id"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        pedido = PedidoDAO.crear_pedido_con_producto(cliente_nombre, int(producto_id))
+        if pedido:
+            serializer = PedidoSerializer(pedido)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"error": "Producto no encontrado o no disponible"},
+            status=status.HTTP_404_NOT_FOUND
+        )
